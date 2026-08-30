@@ -76,19 +76,29 @@ The primitives come from perception rather than from document semantics, because
 
 ## Installation
 
-Canvas is a header-only C++ library with Cython bindings. You need a C++ compiler and Cython.
+```bash
+pip install canvas-dsl
+```
+
+The distribution is named `canvas-dsl` because `canvas` is taken on PyPI. The
+import name is `canvas`:
+
+```python
+from canvas import Stub, Region
+```
+
+Wheels are published for CPython 3.8–3.13 on Linux (x86-64, aarch64), macOS
+(Intel, Apple silicon), and Windows (x86-64), so no compiler is needed on those
+platforms. Elsewhere pip falls back to the source distribution, which requires a
+C++11 compiler; Cython is fetched automatically as a build dependency.
+
+### From source
 
 ```bash
 git clone https://github.com/vyas315/Canvas.git
 cd Canvas
 pip install .
 ```
-
-Requirements:
-
-- Python 3.6+
-- Cython
-- A C++ compiler supporting C++11
 
 ---
 

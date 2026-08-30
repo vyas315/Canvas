@@ -1,0 +1,15 @@
+# Metadata and legal
+include LICENSE
+include NOTICE
+include README.md
+include pyproject.toml
+
+# The C++ library. `graft` is required rather than a *.hpp pattern because the
+# umbrella headers (Canvas/Core, Canvas/Main, ...) have no file extension.
+graft Canvas
+
+# Cython sources; the generated .cpp is produced at build time, not shipped.
+recursive-include python-binding *.pyx *.pxd
+
+global-exclude *.py[cod] *.so *.pyd *.o
+global-exclude .DS_Store

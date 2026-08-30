@@ -1,3 +1,20 @@
 [build-system]
 requires = ["setuptools", "wheel", "Cython>=3.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+# PyPy is skipped because the Cython bindings target the CPython C-API;
+# 32-bit musl is skipped for lack of a toolchain worth maintaining.
+skip = ["pp*", "*-musllinux_i686"]
+# Catches the case where a wheel compiles but does not import.
+test-command = 'python -c "import canvas; r = canvas.Region(0, 0, 10, 10, \"ok\"); assert r.value == \"ok\"; print(\"import ok\", r.x2)"'
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
