@@ -1,0 +1,96 @@
+name: release
+
+# Wheels and sdist are built on every push to main and on pull requests so
+# breakage surfaces early; publishing happens only when a GitHub Release is
+# published.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  wheels:
+    name: wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Needed only for the Linux aarch64 cross-build.
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21.3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      # The sdist must carry the C++ headers or it cannot compile downstream.
+      - name: Verify sdist contains the C++ headers
+        run: |
+          set -e
+          tar tzf dist/*.tar.gz | grep -q 'Canvas/src/Core/region.hpp'
+          tar tzf dist/*.tar.gz | grep -q 'Canvas/Main'
+          tar tzf dist/*.tar.gz | grep -q 'python-binding/binding.pyx'
+          echo "sdist contents verified"
+
+      - name: Install from sdist and smoke-test
+        run: |
+          set -e
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.tar.gz
+          python -c "import canvas; r = canvas.Region(0, 0, 10, 10, 'ok'); assert r.value == 'ok'; print('sdist install ok')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  publish:
+    name: publish
+    needs: [wheels, sdist]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      # Required for Trusted Publishing; no API token is stored.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # A GitHub Release marked "pre-release" goes to TestPyPI, so a full
+      # release can be rehearsed end to end without burning a version number
+      # on PyPI, where filenames are immutable.
+      - name: Publish to TestPyPI
+        if: github.event.release.prerelease
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Publish to PyPI
+        if: ${{ !github.event.release.prerelease }}
+        uses: pypa/gh-action-pypi-publish@release/v1

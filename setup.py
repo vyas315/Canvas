@@ -33,15 +33,17 @@ else:
 
 canvas_extension = Extension(
     name="canvas",
-    sources=["./python-binding/binding.pyx"],
-    include_dirs=["./"],
+    sources=[os.path.join(HERE, "python-binding", "binding.pyx")],
+    include_dirs=[HERE],
     extra_compile_args=EXTRA_COMPILE_ARGS,
     language="c++",
 )
 
 setup(
-    name="canvas",
-    version="1.0.0",
+    # PyPI distribution name. The import name remains `canvas`, set by the
+    # Extension above; `canvas` itself is already taken on PyPI.
+    name="canvas-dsl",
+    version="1.0.0rc1",
     description=(
         "A domain-specific language for extracting structured data from "
         "documents by spatial reasoning."
@@ -56,7 +58,7 @@ setup(
     },
     license="Apache-2.0",
     ext_modules=cythonize([canvas_extension]),
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -64,6 +66,13 @@ setup(
         "Programming Language :: C++",
         "Programming Language :: Cython",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering :: Image Recognition",
         "Topic :: Text Processing :: Markup",
     ],
